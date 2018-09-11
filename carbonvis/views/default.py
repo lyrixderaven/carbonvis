@@ -19,9 +19,9 @@ def home(request):
         else:
             vehicle_id = request.dbsession.query(Vehicle).first().id
         query = request.dbsession.query(Vehicle).filter(Vehicle.id==vehicle_id)
+        paths_to_show = []
         if query.count() > 0:
             vehicle = query.one()
-            paths_to_show = []
             for p in vehicle.paths:
                 if p.length > 0 and not p.archived:
                     paths_to_show.append(p)
