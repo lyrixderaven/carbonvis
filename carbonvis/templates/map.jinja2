@@ -1,0 +1,175 @@
+{% extends "layout.jinja2" %} {% block extra_head %}
+<script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAF02NIJrza3JuMkYD2fmH3UyHREjrSCE0&amp;libraries=geometry"></script>
+<script src="https://rawgit.com/rcknr/basemap-google-maps/master/basemap-tiles.min.js"></script>
+
+<!-- Map Icons -->
+
+<link rel="stylesheet" type="text/css" href="{{request.static_url('carbonvis:static/mapicons/dist/css/map-icons.css')}}">
+<link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.10.19/css/jquery.dataTables.css">
+<script type="text/javascript" src="{{request.static_url('carbonvis:static/mapicons/dist/js/map-icons.js')}}"></script>
+<script type="text/javascript" src="{{request.static_url('carbonvis:static/mapping/maps.js')}}"></script>
+<script type="text/javascript" src="{{request.static_url('carbonvis:static/js/URI.js')}}"></script>
+
+
+
+ {% endblock extra_head %}
+
+ {% block content %}
+
+
+<div id="map" class="map jumbotron"></div>
+
+<div class="content">
+    <div class="floating-title">
+        <h2><span class="font-semi-bold">EROG - eRollin' on Green CO&#8322; Fussabdruck</span></h2>
+        <h1><span class="smaller">CO&#8322; Fussabdruck</span></h1>
+    </div>
+    <div
+        id='datastore'
+        style="display:none"
+        data-vehicle-id="{{vehicle_id}}"
+        ></div>
+    <div class="floating-info draggable" id="info_window" style="display: none;" data-sticky='false'>
+    </div>
+    <div class="floating-tools">
+        <div class="floating-vehicles-outer container resizable" id="vehicles">
+            <h3><span class="smaller">Vehicles</span>
+                <a href="#" class="collapsible" data-target="#vehicles_content" data-parent="#vehicles"><i class="arrow down"></i></a>
+            </h3>
+            <div id='vehicles_content' style="display: none">
+                {% for vehicle in vehicles %}
+                <a href="/?vehicle_id={{vehicle.id}}">> uCarver {{vehicle.id}} ({{vehicle.num_trips}} trips, {{vehicle.km_driven}} km)</a><br />
+                {% endfor %}
+            </div>
+        </div>
+        <div class="floating-trips-outer container resizable" id="trips">
+            <h3><span class="smaller">Trips</span>
+                <a href="#" class="collapsible" data-target="#trips_content" data-parent="#trips"><i class="arrow up"></i></a></h3>
+            <div id='trips_content'>
+                <a href="#" onClick='showPaths()'>Alle zeigen</a> - <a href="#" onClick='clearPaths()'>Alle verstecken</a>
+                <ul id="pathList"></ul>
+                <div class="floating-trips">
+                    <form>
+                        <table id="paths_table" class="display compact" style="width:100%">
+                            <thead>
+                                <tr>
+                                    <th></th>
+                                    <th>Trip</th>
+                                    <th>KM</th>
+                                    <th>CO2</th>
+                                    <th>Date & Time</th>
+                                    <th>Tools</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                            {% for path in paths %}
+                                <tr>
+                                    <td data-path-id="{{path.id}}"><input
+                                        type="checkbox"
+                                        id="path_{{path.id}}"
+                                        class='pathCheck'
+                                        name="show_path"
+                                        data-path-id="{{path.id}}"
+                                        /></td>
+                                    <td>
+                                        <label for="path_{{path.id}}">Trip {{path.id}}</label>
+                                    </td>
+                                    <td>
+                                        {{path.km}} km
+                                    </td>
+                                    <td>{{ path.footprint|round(1) }} g</td>
+                                    <td>
+                                        {{path.start_time}}
+                                    </td>
+                                    <td>
+                                        <a href='#' id='editPathLink_{{path.id}}' onclick="event.stopPropagation();toggleEditPath({{path.id}})" style="display: None;">Anpassen</a>
+                                    </td>
+                                </tr>
+                            {% endfor %}
+                            </tbody>
+                        </table>
+                    </form>
+                </div>
+                <a href="#" id="a_merge" onClick="mergePaths()">Pfade kombinieren</a>
+            </div>
+        </div>
+    </div>
+    <script type="text/javascript">
+        // DOM element where the map will be attached
+        var container = document.getElementById('map');
+        var pathlist = document.getElementById('pathList');
+        var map = new google.maps.Map(container, {
+          zoom: 14,
+          center: new google.maps.LatLng(48.226514, 16.508394),
+        });
+
+        new Basemap(map);
+        var paths = new PathController();
+        var display = new DisplayController(map);
+
+        var emissions = new EmissionsController()
+        {% for vehicle in emissions_list.keys() %}
+            emissions.add_vehicle(
+                '{{vehicle}}',
+                '{{emissions_list[vehicle]['title']}}',
+                {{emissions_list[vehicle]['emissions']}}
+            );
+        {% endfor %}
+
+        {% for path in paths %}
+            paths.push(new Path(
+                {{ path.id }},
+                {{ path.js_pointlist()|safe }},
+                '{{ path.duration }}',
+                {{ path.footprint }},
+                {{ path.km }},
+                map,
+                display,
+                emissions)
+            );
+        {% endfor %}
+
+        paths.current_index = 0;
+        paths.show({{paths[0].id}});
+
+
+
+
+        $(document).ready( function () {
+            $('#paths_table').DataTable({
+                "paging":   true,
+                 "order": [[ 4, "asc" ]],
+                 "lengthMenu": [ 10, 25 ]
+            });
+            $('#paths_table tbody').on( 'click', 'tr', function (event) {
+                event.stopPropagation();
+                $(this).toggleClass('selected');
+                toggle_path($(this).children().data('pathId'));
+                $(this).toggleClass('selected');
+            } );
+
+            $( ".resizable" ).resizable().resizable("option", { minWidth: 380 });
+            $( ".draggable" ).draggable();
+
+            // Make collapsible divs
+            $('.collapsible').on( 'click', function (event) {
+                var content = $(this.dataset['target']).first();
+                var parent = $(this.dataset['parent']).first();
+                if (content.css('display') === "block") {
+                  content.css('display',"none");
+                  this.childNodes[0].classList.remove("up")
+                  this.childNodes[0].classList.add("down")
+                  parent.resizable("option", { disabled: true });
+                } else {
+                  content.css('display',"block");
+                  this.childNodes[0].classList.add("up")
+                  this.childNodes[0].classList.remove("down")
+                  parent.resizable("option", { disabled: false });
+                }
+            });
+
+        } );
+    </script>
+
+
+    {% endblock content %}
