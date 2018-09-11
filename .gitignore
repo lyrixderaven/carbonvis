@@ -24,7 +24,6 @@ build/
 ignore/
 coverage
 coverage.xml
-dist/
 env*/
 nosetests.xml
 pip-selfcheck.json
