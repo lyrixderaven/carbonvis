@@ -29,6 +29,44 @@ class EmissionsController{
       return this.vehicles[type]['emissions'];
     }
 
+    get_vehicle_series(distance, selected_type){
+      var data = [];
+      var sorted_vehicles = _.sortBy(this.vehicles, ['emissions', 'title']);
+      var selected_index = 0;
+      for (var type in sorted_vehicles) {
+        if(sorted_vehicles[type]['title']===this.vehicles[selected_type]['title']){
+            selected_index = type;
+        }
+        data.push([
+         sorted_vehicles[type]['title'],
+          Number.parseFloat(distance * sorted_vehicles[type]['emissions'])
+        ])
+      }
+      var series = [{
+                name: 'CO₂-Verbrauch',
+                data: data,
+                zoneAxis: 'x',
+                zones: [
+                    {value: selected_index-1},
+                    {value: selected_index, color: '#00FF00'},
+                ],
+                dataLabels: {
+                  enabled: true,
+                  rotation: -90,
+                  allowOverlap: true,
+                  color: '#666666',
+                  align: 'left',
+                  format: '{point.y:.1f} g', // one decimal
+                  y: -10, // 10 pixels down from the top
+                  style: {
+                      fontSize: '10px',
+                      fontFamily: 'Raleway, sans-serif'
+                  }
+              }
+      }]
+      return series
+    }
+
     get_form(path_id, selected_type){
       var form_html = `
       <form>
@@ -295,8 +333,9 @@ class Path {
             <b>Uhrzeit:</b>${this.points[this.points.length - 1].recorded} - ${this.points[this.points.length - 1].recorded}<br />
             <b>Fahrzeit:</b> ${this.duration}<br />
             <b>Distanz:</b> ${this.distance} km<br />
-            <b>CO₂-Fussabdruck:</b> ${this.get_emissions()} g CO&#8322;<br /><br />
+            <b>CO₂-Fussabdruck:</b> ${this.get_emissions(this.vehicle)} g CO&#8322;<br /><br />
             <b>Fahrzeugtyp:</b><br /> ${this.emissions.get_form(this.id, this.vehicle)}
+            <div id="chart" style="min-width: 350px; height: 600px; margin: 0 auto"></div>
             </div>
       `
       $('#info_window').css("display", "block");
@@ -304,6 +343,42 @@ class Path {
 
       $(`#vehicle_select_${this.id}`).change(function(){
               setPathVehicle(this.dataset['pathId'], $(this).val())
+      });
+
+
+      this.info_chart = Highcharts.chart('chart', {
+          chart: {
+              type: 'column'
+          },
+          title: {
+              text: 'CO₂-Fussabdruck-Vergleich'
+          },
+          subtitle: {
+              text: ''
+          },
+          xAxis: {
+              type: 'category',
+              labels: {
+                  rotation: -90,
+                  style: {
+                      fontSize: '13px',
+                      fontFamily: 'Verdana, sans-serif'
+                  }
+              }
+          },
+          yAxis: {
+              min: 0,
+              title: {
+                  text: 'CO₂-Verbrauch'
+              }
+          },
+          legend: {
+              enabled: false
+          },
+          tooltip: {
+              pointFormat: 'CO₂: <b>{point.y:.1f} g </b>'
+          },
+          series: this.emissions.get_vehicle_series(this.distance, this.vehicle),
       });
     }
 
@@ -408,8 +483,8 @@ class Path {
       return {lat: center_point.lat, lng: center_point.long}
     }
 
-    get_emissions(){
-      return Number.parseFloat(this.distance * this.emissions.get_emissions(this.vehicle)).toFixed(2);
+    get_emissions(vehicle){
+      return Number.parseFloat(this.distance * this.emissions.get_emissions(vehicle)).toFixed(2);
     }
 
     bindMarkerToPolylines(marker, index) {
