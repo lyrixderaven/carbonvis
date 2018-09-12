@@ -86,7 +86,8 @@
                                         {{path.start_time}}
                                     </td>
                                     <td>
-                                        <a href='#' id='editPathLink_{{path.id}}' onclick="event.stopPropagation();toggleEditPath({{path.id}})" style="display: None;">Anpassen</a>
+                                        <a href='#' id='editPathLink_{{path.id}}' onclick="event.stopPropagation();toggleEditPath({{path.id}})" style="display: None;">Anpassen</a><br />
+                                        <a href='#' id='showPathInfo_{{path.id}}' onclick="event.stopPropagation();showInfoWindow({{path.id}})" style="display: None;">Info</a>
                                     </td>
                                 </tr>
                             {% endfor %}

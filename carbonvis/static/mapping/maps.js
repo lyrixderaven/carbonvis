@@ -47,8 +47,8 @@ class EmissionsController{
                 data: data,
                 zoneAxis: 'x',
                 zones: [
-                    {value: selected_index-1},
-                    {value: selected_index, color: '#00FF00'},
+                    {value: selected_index},
+                    {value: selected_index+1, color: '#00FF00'},
                 ],
                 dataLabels: {
                   enabled: true,
@@ -309,6 +309,7 @@ class Path {
         this.shown = true;
         this.get_checkbox().prop("checked", true);
         this.get_edit_link().css("display", '');
+        this.get_info_link().css("display", '');
         if(center) this.center_map();
     }
 
@@ -334,7 +335,7 @@ class Path {
             <b>Fahrzeit:</b> ${this.duration}<br />
             <b>Distanz:</b> ${this.distance} km<br />
             <b>CO₂-Fussabdruck:</b> ${this.get_emissions(this.vehicle)} g CO&#8322;<br /><br />
-            <b>Fahrzeugtyp:</b><br /> ${this.emissions.get_form(this.id, this.vehicle)}
+            <b>Fahrzeugtyp:</b><br /> ${this.emissions.get_form(this.id, this.vehicle)}<br /><br />
             <div id="chart" style="min-width: 350px; height: 600px; margin: 0 auto"></div>
             </div>
       `
@@ -445,6 +446,7 @@ class Path {
         this.get_checkbox().prop("checked", false);
 
         this.get_edit_link().css("display", 'None');
+        this.get_info_link().css("display", 'None');
     }
 
     hideMarkers() {
@@ -466,6 +468,11 @@ class Path {
 
     get_edit_link(){
       var link_id = "#editPathLink_" + this.id;
+      return $(link_id);
+    }
+
+    get_info_link(){
+      var link_id = "#showPathInfo_" + this.id;
       return $(link_id);
     }
 
@@ -548,12 +555,18 @@ class PathController{
       this.paths[path_id].clear();
       this.paths[path_id].init();
       this.paths[path_id].show();
+      this.paths[path_id].show_info_window(true);
     }
 };
 
 function show_path(path_id) {
     paths.show(path_id)
 };
+
+function showInfoWindow(path_id) {
+    paths.get(path_id).show_info_window(true);
+};
+
 
 function toggle_path(path_id) {
     paths.toggle(path_id)
