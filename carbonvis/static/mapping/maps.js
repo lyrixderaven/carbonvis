@@ -42,6 +42,7 @@ class EmissionsController{
           Number.parseFloat(distance * sorted_vehicles[type]['emissions'])
         ])
       }
+      selected_index = Number.parseInt(selected_index);
       var series = [{
                 name: 'CO₂-Verbrauch',
                 data: data,
