@@ -26,18 +26,25 @@ class EmissionsController {
         };
     }
 
-    add_vehicle(type, title, emissions_fuel, emissions_prod, emissions_tailpipe) {
+    add_vehicle(type, title, emissions_fuel, emissions_prod, emissions_tailpipe, info) {
         this.vehicles[type] = {
             'title': title,
             'emissions_fuel': emissions_fuel,
             'emissions_prod': emissions_prod,
             'emissions_tailpipe': emissions_tailpipe,
             'emissions_total': emissions_fuel + emissions_prod + emissions_tailpipe,
+            'info': info,
         }
     }
 
     get_vehicles() {
         return this.vehicles;
+    }
+
+    show_vehicle_info(title){
+        var vehicle = this.get_vehicle_from_title(title);
+        $('#vehicle_info').css("display", "");
+        $('#vehicle_info').html(this.vehicles[vehicle]['info']);
     }
 
     get_emissions(type) {
@@ -113,9 +120,10 @@ class EmissionsController {
         return series
     }
 
-    get_vehicle_from_title(title){
+    get_vehicle_from_title(title) {
         for (var type in this.vehicles) {
-            if(title === this.vehicles[type]['title']) return type;
+            console.log(`'${title}' === '${this.vehicles[type]['title']}'`);
+            if (title === this.vehicles[type]['title']) return type;
         }
     }
 
@@ -136,7 +144,8 @@ class EmissionsController {
                 labels: {
                     style: {
                         fontSize: '10px',
-                        fontFamily: 'Verdana, sans-serif'
+                        fontFamily: 'Verdana, sans-serif',
+                        textOverflow: 'none'
                     }
                 }
             },
@@ -175,7 +184,6 @@ class EmissionsController {
                         events: {
                             click: function() {
                                 setPathVehicle(this.path_id, this.vehicle);
-                                // alert('Category: ' + this.category + ', value: ' + this.y);
                             }
                         }
                     }
@@ -304,19 +312,19 @@ class Path {
         google.maps.event.addListener(this.polyline_emissions, 'click', function() {
             this.path.show_info_window(true);
         });
-        google.maps.event.addListener(this.polyline, 'mouseover', function() {
-            this.path.show_info_window();
-        });
-        google.maps.event.addListener(this.polyline, 'mouseout', function() {
-            this.path.hide_info_window();
-        });
+        // google.maps.event.addListener(this.polyline, 'mouseover', function() {
+        //     this.path.show_info_window();
+        // });
+        // google.maps.event.addListener(this.polyline, 'mouseout', function() {
+        //     this.path.hide_info_window();
+        // });
 
-        google.maps.event.addListener(this.polyline_emissions, 'mouseover', function() {
-            this.path.show_info_window();
-        });
-        google.maps.event.addListener(this.polyline_emissions, 'mouseout', function() {
-            this.path.hide_info_window();
-        });
+        // google.maps.event.addListener(this.polyline_emissions, 'mouseover', function() {
+        //     this.path.show_info_window();
+        // });
+        // google.maps.event.addListener(this.polyline_emissions, 'mouseout', function() {
+        //     this.path.hide_info_window();
+        // });
 
     };
 
@@ -450,7 +458,8 @@ class Path {
                 <b>CO₂-Fussabdruck:</b> ${this.get_emissions(this.vehicle)} g CO&#8322;<br />
             </h3>
             <b>Fahrzeugtyp:</b><br /> ${this.emissions.get_form(this.id, this.vehicle)}<br />
-            <div id="chart" style="min-width: 350px; margin: 0 auto"></div>
+            <div id="chart" class='chart'></div>
+            <div id="vehicle_info" class='vehicle_info'></div>
             </div>
       `
         $('#info_window').css("display", "block");
@@ -462,6 +471,10 @@ class Path {
 
 
         this.info_chart = this.emissions.get_chart('chart', this.distance, this.vehicle, this.id);
+        var emissions = this.emissions;
+        $('.highcharts-xaxis-labels text').on('click', function() {
+            emissions.show_vehicle_info($(this).text());
+        });
     }
     center_map() {
         var bounds = new google.maps.LatLngBounds();

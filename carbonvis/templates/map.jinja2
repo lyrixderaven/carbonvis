@@ -120,7 +120,8 @@
                 '{{emissions_list[vehicle]['title']}}',
                 {{emissions_list[vehicle]['emissions_fuel']}},
                 {{emissions_list[vehicle]['emissions_prod']}},
-                {{emissions_list[vehicle]['emissions_tailpipe']}}
+                {{emissions_list[vehicle]['emissions_tailpipe']}},
+                `{{emissions_list[vehicle]['info']|safe}}`
             );
         {% endfor %}
 

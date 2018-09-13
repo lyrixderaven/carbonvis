@@ -204,6 +204,10 @@ html{
   padding-top: 10px;
 }
 
+.formula{
+  color: #1790B2;
+}
+
 .floating-vehicles-outer{
   width: 380px;
   overflow: hidden;
@@ -232,6 +236,27 @@ html{
   padding-bottom: 10px;
   border-top: thin solid black;
   border-bottom: thin solid black;
+}
+
+.chart{
+    min-width: 350px;
+    margin: 0 auto;
+    width: 50%;
+    position: absolute;
+    display: inline-block;
+    left: 10px;
+}
+
+.vehicle_info{
+    border-left: thin solid black;
+    padding: 10px;
+    display: none;
+    width: 45%;
+    position: absolute;
+    display: inline-block;
+    right: 4px;
+    height: 75%;
+    font-size: 1.1rem;
 }
 
 #paths_table_wrapper {
