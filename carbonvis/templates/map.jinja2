@@ -50,7 +50,8 @@
             <h3><span class="smaller">Trips</span>
                 <a href="#" class="collapsible" data-target="#trips_content" data-parent="#trips"><i class="arrow up"></i></a></h3>
             <div id='trips_content'>
-                <a href="#" onClick='showPaths()'>Alle zeigen</a> - <a href="#" onClick='clearPaths()'>Alle verstecken</a>
+                <a href="#" onClick='showPaths()'>Alle zeigen</a> - <a href="#" onClick='clearPaths()'>Alle verstecken</a><br />
+                <a href="#" id="toggleMarkers" onClick='toogleMarkers()'>Marker Verstecken</a>
                 <ul id="pathList"></ul>
                 <div class="floating-trips">
                     <form>
@@ -117,7 +118,9 @@
             emissions.add_vehicle(
                 '{{vehicle}}',
                 '{{emissions_list[vehicle]['title']}}',
-                {{emissions_list[vehicle]['emissions']}}
+                {{emissions_list[vehicle]['emissions_fuel']}},
+                {{emissions_list[vehicle]['emissions_prod']}},
+                {{emissions_list[vehicle]['emissions_tailpipe']}}
             );
         {% endfor %}
 

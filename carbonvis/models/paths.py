@@ -82,9 +82,15 @@ class Path(Base):
     @property
     def footprint(self, vehicle='ucarver'):
         if vehicle in VEHICLE_TYPE_CO2:
-            return round(self.km * VEHICLE_TYPE_CO2[vehicle]['emissions'],3)
+            em = VEHICLE_TYPE_CO2[vehicle]
         else:
-            return round(self.km * VEHICLE_TYPE_CO2['ucarver']['emissions'],3)
+            em = VEHICLE_TYPE_CO2['ucarver']
+
+        return round(self.km *
+            (em['emissions_fuel'] + em['emissions_prod'] + em['emissions_tailpipe'])
+        ,3)
+
+
 
 class Vehicle(Base):
     __tablename__ = 'vehicles'

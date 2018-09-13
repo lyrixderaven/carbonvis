@@ -181,10 +181,10 @@ html{
 
 .floating-info{
   position: absolute;
-  top: 130px;
-  right: 10px;
-  width: 380px;
-  /* height: 685px; */
+  bottom: 30px;
+  left: 10px;
+  width: 90%;
+  height: 510px;
   padding-bottom: 10px;
   padding-top: 10px;
   padding-left: 10px;
