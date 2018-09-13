@@ -44,14 +44,18 @@ class EmissionsController {
         return this.vehicles[type]['emissions_total'];
     }
 
-    get_hc_emission_series(emission_type) {
+    get_hc_emission_series(emission_type, path_id) {
         var series = {
             name: this.emission_titles[emission_type],
             data: [],
         };
         var sorted_vehicles = _.sortBy(this.vehicles, ['emissions_total', 'title']);
         for (var type in sorted_vehicles) {
-            series['data'].push(sorted_vehicles[type][emission_type]);
+            series['data'].push({
+                path_id: path_id,
+                y: sorted_vehicles[type][emission_type],
+                vehicle: this.get_vehicle_from_title(sorted_vehicles[type]['title'])
+            });
         }
         return series;
     }
@@ -66,7 +70,7 @@ class EmissionsController {
     }
 
 
-    get_hc_vehicle_series(distance, selected_type) {
+    get_hc_vehicle_series(distance, selected_type, path_id) {
         var sorted_vehicles = _.sortBy(this.vehicles, ['emissions_total', 'title']);
         var selected_index = 0;
 
@@ -102,14 +106,20 @@ class EmissionsController {
         //     }
         // }]
         var series = [
-            this.get_hc_emission_series('emissions_fuel'),
-            this.get_hc_emission_series('emissions_prod'),
-            this.get_hc_emission_series('emissions_tailpipe'),
+            this.get_hc_emission_series('emissions_fuel', path_id),
+            this.get_hc_emission_series('emissions_prod', path_id),
+            this.get_hc_emission_series('emissions_tailpipe', path_id),
         ]
         return series
     }
 
-    get_chart(container, distance, selected_vehicle) {
+    get_vehicle_from_title(title){
+        for (var type in this.vehicles) {
+            if(title === this.vehicles[type]['title']) return type;
+        }
+    }
+
+    get_chart(container, distance, selected_vehicle, path_id) {
         return Highcharts.chart(container, {
             chart: {
                 type: 'bar'
@@ -160,10 +170,18 @@ class EmissionsController {
                     dataLabels: {
                         enabled: false,
                         color: (Highcharts.theme && Highcharts.theme.dataLabelsColor) || 'white'
+                    },
+                    point: {
+                        events: {
+                            click: function() {
+                                setPathVehicle(this.path_id, this.vehicle);
+                                // alert('Category: ' + this.category + ', value: ' + this.y);
+                            }
+                        }
                     }
                 }
             },
-            series: this.get_hc_vehicle_series(distance, selected_vehicle),
+            series: this.get_hc_vehicle_series(distance, selected_vehicle, path_id),
         });
     }
 
@@ -183,14 +201,16 @@ class EmissionsController {
     }
 
     get_scaled_width(type) {
-        return this.vehicles[type]['emissions'] * (50 - 5) / (100 - 1) + 5
+        var scaled_width = this.vehicles[type]['emissions_total'] * (50 - 5) / (100 - 1) + 5;
+        console.log("Scaled Width for vehicle type " + type + ": " + scaled_width);
+        return scaled_width
     };
 
     interpolate_gradient(type) {
 
-        var a = "#44FF00",
+        var a = "#00FF00",
             b = "#FF0000",
-            amount = this.vehicles[type]['emissions'] * 1 / (400 - 1),
+            amount = this.vehicles[type]['emissions_total'] * 1 / (505 - 1),
             ah = parseInt(a.replace(/#/g, ''), 16),
             ar = ah >> 16,
             ag = ah >> 8 & 0xff,
@@ -201,10 +221,10 @@ class EmissionsController {
             bb = bh & 0xff,
             rr = ar + amount * (br - ar),
             rg = ag + amount * (bg - ag),
-            rb = ab + amount * (bb - ab);
-
-        ``
-        return '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+            rb = ab + amount * (bb - ab),
+            color = '#' + ((1 << 24) + (rr << 16) + (rg << 8) + rb | 0).toString(16).slice(1);
+        console.log('Color for vehicle type ' + type + ' and amount ' + amount + ': ' + color);
+        return color
     };
 
     //
@@ -441,7 +461,7 @@ class Path {
         });
 
 
-        this.info_chart = this.emissions.get_chart('chart', this.distance, this.vehicle);
+        this.info_chart = this.emissions.get_chart('chart', this.distance, this.vehicle, this.id);
     }
     center_map() {
         var bounds = new google.maps.LatLngBounds();
